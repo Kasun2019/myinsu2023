@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "637934534649",
+    "project_id": "myinsusliit",
+    "storage_bucket": "myinsusliit.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:637934534649:android:2cf2c9c38ca116545c4728",
+        "android_client_info": {
+          "package_name": "com.example.insurtechmobapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "637934534649-alnq8vpffrgnpmiipiivkkg1t11j76g3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDkstBqQPC34zvRy6_s5kgmZmLbkPQtHeA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "637934534649-alnq8vpffrgnpmiipiivkkg1t11j76g3.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
