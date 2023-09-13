@@ -2,16 +2,30 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:insurtechmobapp/home.dart';
+import 'package:camera/camera.dart';
+
 
 import 'CustomMessageDialog .dart';
 
-void main() {
-  runApp(const MyInsuApp());
+void main() async {
+
+    WidgetsFlutterBinding.ensureInitialized();
+
+  // Obtain a list of the available cameras on the device.
+  final cameras = await availableCameras();
+
+  // Get a specific camera from the list of available cameras.
+  final firstCamera = cameras.first;
+
+  runApp(MyInsuApp(camera: firstCamera));
 }
 
 class MyInsuApp extends StatefulWidget {
-  const MyInsuApp({super.key});
-
+  const MyInsuApp({
+    super.key,
+    required this.camera
+  });
+final CameraDescription camera;
   @override
   State<MyInsuApp> createState() => _MyInsuAppState();
   
@@ -47,9 +61,9 @@ class _MyInsuAppState extends State<MyInsuApp> {
       future: _initializeFireBsa(),
       builder: (context,snapshot){
         if(snapshot.connectionState == ConnectionState.done){
-            return const MaterialApp(
+            return  MaterialApp(
                 debugShowCheckedModeBanner: false,
-                home: LoginPage());
+                home: LoginPage(camera:widget.camera));
         }
       
        return const Center(
@@ -67,8 +81,8 @@ class _MyInsuAppState extends State<MyInsuApp> {
 
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
-
+  const LoginPage({super.key,required this.camera});
+final CameraDescription camera;
   @override
   State<LoginPage> createState() => _LoginPageState();
 }
@@ -233,7 +247,7 @@ class _LoginPageState extends State<LoginPage> {
                            
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (context) => Home()),
+                                MaterialPageRoute(builder: (context) => Home(camera:widget.camera)),
                               );
                              // // Navigator.of(context).
                             //  // pushReplacement(

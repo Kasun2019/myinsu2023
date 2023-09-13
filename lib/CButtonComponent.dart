@@ -4,11 +4,15 @@ import 'package:flutter/material.dart';
 
 class CButtonComponent extends StatelessWidget {
   final String text;
+  final TextStyle paramTextStyle;
+  final Icon paramIcon;
   final Function()? onPressed;
 
   const CButtonComponent({super.key, 
     required this.text,
-    this.onPressed,
+    required this.paramTextStyle,
+    required this.paramIcon,
+    this.onPressed, 
   });
 
   @override
@@ -26,14 +30,16 @@ class CButtonComponent extends StatelessWidget {
                                 
       //                         ),
       child: TextButton.icon(
-        icon: const Icon(Icons.car_crash,size: 50),
+        icon: paramIcon,
+        //icon: const Icon(Icons.car_crash,size: 50),
         onPressed: onPressed,
         label: Text(text,
-        style: const TextStyle(
-                    fontSize: 24, // Custom font size
-                    fontWeight: FontWeight.bold, // Custom font weight
-                    //color: Color.fromARGB(255, 255, 255, 255), // Custom text color
-                  )
+        style: paramTextStyle
+        // const TextStyle(
+        //             fontSize: 24, // Custom font size
+        //             fontWeight: FontWeight.bold, // Custom font weight
+        //             //color: Color.fromARGB(255, 255, 255, 255), // Custom text color
+        //           )
                   ),
         style: ButtonStyle(
           fixedSize: MaterialStateProperty.all(const Size(200, 80)),
