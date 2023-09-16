@@ -25,7 +25,8 @@ class CustomMessageDialog extends StatelessWidget {
         ),
         TextButton(
           onPressed: () {
-            onPositivePressed();
+            onPositivePressed;
+            print("positive");
             Navigator.of(context).pop(); // Close the dialog
           },
           child: const Text('OK'),

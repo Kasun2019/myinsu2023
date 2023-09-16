@@ -1,6 +1,8 @@
+
 import 'package:camera/camera.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:insurtechmobapp/CustomMessageDialog%20.dart';
 import 'package:insurtechmobapp/imageGallery.dart';
 import 'package:insurtechmobapp/models/customer.dart';
 import 'package:insurtechmobapp/photoUpload.dart';
@@ -15,10 +17,11 @@ final CameraDescription camera;
 class _VehicleState extends State<Vehicle> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   //List<String> itemsList = ['Option 1', 'Option 2', 'Option 3', 'Option 4'];
-  String _dropDownValue = "";
+  String _dropDownValue = "Front";
   TextEditingController customerCode = TextEditingController();
   TextEditingController customerName = TextEditingController();
   TextEditingController customerAddress = TextEditingController();
+
 
   String collectionName = "Customer";
   late Customer customer;
@@ -39,17 +42,21 @@ print(querySnapshot.docs.isNotEmpty);
       final data = querySnapshot.docs.first.data();
       final customerNameData = data['name'];
       final customerAddressData = data['address'];
+    
 
       // Update the output TextField with the fetched data.
       setState(() {
         customerName.text = customerNameData;
         customerAddress.text = customerAddressData;
+        customer = Customer(code: userInput, name: customerNameData, address: customerAddressData,cType:_dropDownValue);
       });
     } else {
       // Clear the output TextField if no data is found.
+      customer = Customer(code: "", name: "", address: "",cType :"");
       setState(() {
         customerName.text = "";
         customerAddress.text = "";
+        customer = Customer(code: "", name: "", address: "",cType :"");
       });
     }
 
@@ -124,10 +131,16 @@ print(querySnapshot.docs.isNotEmpty);
                   RawMaterialButton(
                         
                         onPressed:() async{
-                              Navigator.push(
+                          try{
+                            if(customer.name != ""){
+                            Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (context) =>  PhotoUpload(camera: widget.camera)),
+                                MaterialPageRoute(builder: (context) =>  PhotoUpload(camera: widget.camera,customer:customer)),
                               );
+                            }
+                          }catch(e){
+                            showCustomMessageDialog(context, "warning!", "Enter Valied Policy Number!", ()=>{ });
+                          }
                         },
                         elevation: 0.0,
                         child: Container(
@@ -206,6 +219,23 @@ print(querySnapshot.docs.isNotEmpty);
   }
 }
 
+void showCustomMessageDialog(
+  BuildContext context,
+  String title,
+  String messages,
+  final VoidCallback onPositivePressed
+  ) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return CustomMessageDialog(
+        title: title,
+        message: messages,
+        onPositivePressed: onPositivePressed
+      );
+    },
+  );
+}
 // listData(BuildContext context){
 //   return StreamBuilder<QuerySnapshot>(
 //     stream:findCustomer(),

@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:insurtechmobapp/findLocation.dart';
 import 'package:insurtechmobapp/home.dart';
 import 'package:camera/camera.dart';
 
@@ -55,6 +57,8 @@ class _MyInsuAppState extends State<MyInsuApp> {
     return firebaseApp;
   }
 
+
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
@@ -87,9 +91,12 @@ final CameraDescription camera;
   State<LoginPage> createState() => _LoginPageState();
 }
 
+
 class _LoginPageState extends State<LoginPage> {
  TextEditingController emailContoller = TextEditingController();
     TextEditingController passwordContoller = TextEditingController();
+
+    
   static Future<User?> loginWithCredential(
     {
       required String email,
@@ -99,6 +106,19 @@ class _LoginPageState extends State<LoginPage> {
   )async{
     FirebaseAuth auth=FirebaseAuth.instance;
     User? user;
+      FindLocation findLocation = FindLocation();
+      findLocation.checkPermission();
+
+        if(await findLocation.checkPermission()){
+
+         Position location =  await findLocation.getLocation();
+         double cLatitude = location.latitude;
+         double cLongitude = location.longitude;
+
+         print("location ................");
+         print(cLatitude);
+         print(cLongitude);
+      }
 
     try
     {
