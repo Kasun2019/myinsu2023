@@ -2,9 +2,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:insurtechmobapp/SqlLiteDB.dart';
 import 'package:insurtechmobapp/findLocation.dart';
 import 'package:insurtechmobapp/home.dart';
 import 'package:camera/camera.dart';
+import 'package:sqflite/sqflite.dart';
 
 
 import 'CustomMessageDialog .dart';
@@ -18,6 +20,11 @@ void main() async {
 
   // Get a specific camera from the list of available cameras.
   final firstCamera = cameras.first;
+  
+    Database? db =  await SqlLiteDB.instance.database;
+
+    print("db?.isOpen");
+    print(db?.isOpen);
 
   runApp(MyInsuApp(camera: firstCamera));
 }
@@ -57,6 +64,8 @@ class _MyInsuAppState extends State<MyInsuApp> {
     return firebaseApp;
   }
 
+ 
+
 
 
   @override
@@ -86,16 +95,21 @@ class _MyInsuAppState extends State<MyInsuApp> {
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key,required this.camera});
+  
 final CameraDescription camera;
   @override
   State<LoginPage> createState() => _LoginPageState();
 }
 
 
+
 class _LoginPageState extends State<LoginPage> {
  TextEditingController emailContoller = TextEditingController();
     TextEditingController passwordContoller = TextEditingController();
-
+   // final  _liteDB = SqlLiteDB.internal();
+    
+TextEditingController _textFieldController = TextEditingController();
+   
     
   static Future<User?> loginWithCredential(
     {
@@ -119,7 +133,7 @@ class _LoginPageState extends State<LoginPage> {
          print(cLatitude);
          print(cLongitude);
       }
-
+    
     try
     {
       UserCredential credential = await auth.signInWithEmailAndPassword(
@@ -142,9 +156,13 @@ class _LoginPageState extends State<LoginPage> {
         showCustomMessageDialog(
           context,
           "Network Error!",
-          "You are running on ofline mode!",
-          ()=>{}
+          "You are running on offline mode!",
+          ()=>{
+            
+            
+          }
           );
+          
       }
     }
     return user;
@@ -262,17 +280,23 @@ class _LoginPageState extends State<LoginPage> {
                             context: context);
                             print("login");
                             print(login);
-                            // if(login != null)
-                            // {
-                           
-                              Navigator.push(
+                            if(login != null)
+                            {
+
+                              if(login.displayName==null){
+                                  displayInputDialog(context);
+
+                              }else{
+                                 Navigator.push(
                                 context,
                                 MaterialPageRoute(builder: (context) => Home(camera:widget.camera)),
                               );
+                              }
+                              
                              // // Navigator.of(context).
                             //  // pushReplacement(
                             //  //   MaterialPageRoute(builder: ((context) => const Home())));
-                            // }
+                             }
                         },
                         
                         elevation: 0.0,
@@ -326,5 +350,56 @@ class _LoginPageState extends State<LoginPage> {
         ),
       );
     
+  }
+  void updateDisplayName(String newName) async {
+  try {
+    User? user = FirebaseAuth.instance.currentUser;
+
+    if (user != null) {
+      await user.updateDisplayName(newName);
+      user = FirebaseAuth.instance.currentUser; 
+
+      print('Display name updated to: ${user?.displayName}');
+    } else {
+
+    }
+  } catch (e) {
+    print('Error updating display name: $e');
+  }
+}
+Future<void> displayInputDialog(BuildContext context) async {
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Display Name'),
+          content: TextField(
+            controller: _textFieldController,
+            decoration: const InputDecoration(hintText: "Enter your name"),
+          ),
+          actions: <Widget>[
+            RawMaterialButton(
+              child: const Text('CANCEL'),
+              onPressed: () {
+                Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => Home(camera:widget.camera)),
+                              );
+              },
+            ),
+            RawMaterialButton(
+              child: const Text('OK'),
+              onPressed: () {
+                updateDisplayName(_textFieldController.text);
+                Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => Home(camera:widget.camera)),
+                              );
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 }

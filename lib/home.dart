@@ -1,4 +1,5 @@
 import 'package:camera/camera.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:insurtechmobapp/vehicle.dart';
 import 'CButtonComponent.dart';
@@ -6,11 +7,13 @@ import 'CButtonComponent.dart';
 class Home extends StatelessWidget {
   const Home({super.key,required this.camera});
   final CameraDescription camera;
+  
 
   @override
   Widget build(BuildContext context) {
     final currentTime = DateTime.now();
-    String greeting = getGreeting(currentTime);
+    User? user = FirebaseAuth.instance.currentUser;
+    String greeting = getGreeting(currentTime)+" ${user?.displayName}";
     return  SafeArea(
       child: Scaffold(
         // appBar: AppBar(

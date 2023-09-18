@@ -148,7 +148,7 @@ class DisplayPictureScreen extends StatelessWidget {
       Position location;
       double cLatitude=0.0;
       double cLongitude=0.0;
-      if(findLocation.checkPermission()==true){
+      if(await findLocation.checkPermission()){
 
          location =  findLocation.getLocation() as Position;
          cLatitude = location.latitude;
