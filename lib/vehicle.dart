@@ -3,9 +3,16 @@ import 'package:camera/camera.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:insurtechmobapp/CustomMessageDialog%20.dart';
+import 'package:insurtechmobapp/SqlLiteDB.dart';
+import 'package:insurtechmobapp/conectivityInt.dart';
+import 'package:insurtechmobapp/home.dart';
 import 'package:insurtechmobapp/imageGallery.dart';
 import 'package:insurtechmobapp/models/customer.dart';
+import 'package:insurtechmobapp/models/insu.dart';
 import 'package:insurtechmobapp/photoUpload.dart';
+import 'package:sqflite/sqlite_api.dart';
+import 'package:intl/intl.dart';
+
 
 class Vehicle extends StatefulWidget {
   const Vehicle({super.key,required this.camera});
@@ -21,6 +28,9 @@ class _VehicleState extends State<Vehicle> {
   TextEditingController customerCode = TextEditingController();
   TextEditingController customerName = TextEditingController();
   TextEditingController customerAddress = TextEditingController();
+  TextEditingController vehicleNumber = TextEditingController();
+  TextEditingController vehicleChassis = TextEditingController();
+  TextEditingController effectiveDate = TextEditingController();
 
 
   String collectionName = "Customer";
@@ -28,29 +38,54 @@ class _VehicleState extends State<Vehicle> {
 
   void findCustomer(String userInput) async{
 
-    final collectionRef = FirebaseFirestore.instance.collection(collectionName);
+    bool conStatus = await ConnectivityCheck.instance.status;
+    print("check internet conectivity");
+    print(await ConnectivityCheck.instance.status);
+    Database? db =  await SqlLiteDB.instance.db;
+    print(conStatus);
+    if(conStatus){
+          print("work with internet");
+          final collectionRef = FirebaseFirestore.instance.collection(collectionName);
+          
+                final querySnapshot = await collectionRef
+                  .where('code', isEqualTo: userInput)
+                  .get();
 
-      print("inizialize ...................");
-      final querySnapshot = await collectionRef
-        .where('code', isEqualTo: userInput)
-        .get();
-print("empty check ...................");
-print(querySnapshot.docs);
-print(querySnapshot.docs.isNotEmpty);
+                if (querySnapshot.docs.isNotEmpty) {
+                final data = querySnapshot.docs.first.data();
+                final customerNameData = data['name'];
+                final customerAddressData = data['address'];
+              
+                // Update the output TextField with the fetched data.
+                setState(() {
+                  customerName.text = customerNameData;
+                  customerAddress.text = customerAddressData;
+                  customer = Customer(code: userInput, name: customerNameData, address: customerAddressData,cType:_dropDownValue);
+                });
+              }
+    }else if(db!.isOpen){
+          print("work with local");
+              String query = 'SELECT * FROM customers WHERE code = ? LIMIT 1';
 
-      if (querySnapshot.docs.isNotEmpty) {
-      final data = querySnapshot.docs.first.data();
-      final customerNameData = data['name'];
-      final customerAddressData = data['address'];
-    
+             
+              List<Map<String, dynamic>>? result = await db.rawQuery(query, [userInput]);
 
-      // Update the output TextField with the fetched data.
-      setState(() {
-        customerName.text = customerNameData;
-        customerAddress.text = customerAddressData;
-        customer = Customer(code: userInput, name: customerNameData, address: customerAddressData,cType:_dropDownValue);
-      });
-    } else {
+              if (result.isNotEmpty) {
+                Map<String, dynamic> raw = result.first;
+                
+                final customerNameData1 = raw['name'];
+                final customerAddressData1 = raw['address'];
+              
+                // Update the output TextField with the fetched data.
+                setState(() {
+                  customerName.text = customerNameData1;
+                  customerAddress.text = customerAddressData1;
+                  customer = Customer(code: userInput, name: customerNameData1, address: customerAddressData1,cType:_dropDownValue);
+                });
+              }
+      
+    }
+    else {
       // Clear the output TextField if no data is found.
       customer = Customer(code: "", name: "", address: "",cType :"");
       setState(() {
@@ -62,6 +97,22 @@ print(querySnapshot.docs.isNotEmpty);
 
   
   }
+   Future<void> selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+              context: context,
+              initialDate: DateTime.now(),
+              firstDate: DateTime(2000),
+              lastDate: DateTime(2101),
+            );
+
+    if (picked != null && picked != DateTime.now()) {
+      // Update the text field with the selected date
+      setState(() {
+        effectiveDate.text = DateFormat('yyyy-MM-dd').format(picked); // Format the date as needed
+      });
+    }
+  }
+  
 
 
   @override
@@ -69,9 +120,20 @@ print(querySnapshot.docs.isNotEmpty);
    
     return  SafeArea(
       child: Scaffold(
-        // appBar: AppBar(
-        //   title: const Text('Home Page'),
-        // ),
+          appBar: AppBar(
+          title: const Text('Vehicle'),
+          // Add a back button to the app bar
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) =>  Home(camera: widget.camera)),
+              );
+              
+            },
+          ),
+        ),
         body: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
@@ -127,15 +189,50 @@ print(querySnapshot.docs.isNotEmpty);
                     );
                   },
                   ),
+                   Column(
+                    children: [
+                      Container(
+                        width: 150,
+                        child: TextFormField(
+                              decoration: const InputDecoration(labelText: "Vehicle Number"),
+                              controller: vehicleNumber,
+                                            
+                        ),
+                      ),
+                      Container(
+                        width: 150,
+                        child: TextFormField(
+                          decoration: const InputDecoration(labelText: "Chassis Number"),
+                          controller: vehicleChassis,
+                                          
+                        ),
+                      ),
+                      Container(
+                        width: 150,
+                        child: TextField(
+                        controller: effectiveDate,
+                        onTap: () => selectDate(context), // Display date picker when the field is tapped
+                        readOnly: true, // Prevent manual text input
+                        decoration: const InputDecoration(
+                          hintText: 'Select a Date',
+                          suffixIcon: Icon(Icons.calendar_today),
+                        ),
+                                          ),
+                      ),
+                    ],
+                   
+                  ),
                   const SizedBox(height:17.0),
                   RawMaterialButton(
                         
                         onPressed:() async{
+                          
                           try{
                             if(customer.name != ""){
+                              Insu insu = Insu(id: 1, policyNumber: "", cType: "", cLatitude: 0, cLongitude: 0, vehicleNumber: vehicleNumber.text, vehicleChassis: vehicleChassis.text, effectiveDate: effectiveDate.text);
                             Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (context) =>  PhotoUpload(camera: widget.camera,customer:customer)),
+                                MaterialPageRoute(builder: (context) =>  PhotoUpload(camera: widget.camera,customer:customer,insu:insu)),
                               );
                             }
                           }catch(e){
@@ -209,6 +306,7 @@ print(querySnapshot.docs.isNotEmpty);
                         
                       ),
                      
+                     
                 ],
               ),
               ),
@@ -217,7 +315,7 @@ print(querySnapshot.docs.isNotEmpty);
       ),
     );
   }
-}
+ 
 
 void showCustomMessageDialog(
   BuildContext context,
@@ -236,6 +334,8 @@ void showCustomMessageDialog(
     },
   );
 }
+
+
 // listData(BuildContext context){
 //   return StreamBuilder<QuerySnapshot>(
 //     stream:findCustomer(),
@@ -246,3 +346,4 @@ void showCustomMessageDialog(
 
 // }
   
+}

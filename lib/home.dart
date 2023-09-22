@@ -1,6 +1,7 @@
 import 'package:camera/camera.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:insurtechmobapp/myCart.dart';
 import 'package:insurtechmobapp/vehicle.dart';
 import 'CButtonComponent.dart';
 
@@ -79,8 +80,7 @@ class Home extends StatelessWidget {
                       ),
                       paramIcon: const Icon(Icons.back_hand_sharp,size: 50,color: Color.fromARGB(255, 185, 69, 60),),
                       onPressed: () {
-                        // Handle button press here
-                        print('Button pressed!');
+
                       },
                     ),
                     ), 
@@ -98,8 +98,10 @@ class Home extends StatelessWidget {
                       ),
                       paramIcon: const Icon(Icons.add_shopping_cart_outlined,size: 50,color: Color.fromARGB(255, 82, 107, 22),),
                       onPressed: () {
-                        // Handle button press here
-                        print('Button pressed!');
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const Mycart(),
+                        ));
                       },
                     ),
                     ), 

@@ -20,11 +20,7 @@ void main() async {
 
   // Get a specific camera from the list of available cameras.
   final firstCamera = cameras.first;
-  
-    Database? db =  await SqlLiteDB.instance.database;
 
-    print("db?.isOpen");
-    print(db?.isOpen);
 
   runApp(MyInsuApp(camera: firstCamera));
 }
@@ -123,6 +119,14 @@ TextEditingController _textFieldController = TextEditingController();
       FindLocation findLocation = FindLocation();
       findLocation.checkPermission();
 
+       Database? db =  await SqlLiteDB.instance.db;
+
+      print("db?.isOpen");
+      print(db?.isOpen);
+
+      
+
+
         if(await findLocation.checkPermission()){
 
          Position location =  await findLocation.getLocation();
@@ -163,6 +167,14 @@ TextEditingController _textFieldController = TextEditingController();
           }
           );
           
+      }else{
+         print("No User Found!");
+        showCustomMessageDialog(
+          context,
+          "Error!",
+          "${e.code}",
+          ()=>{}
+          );
       }
     }
     return user;
@@ -280,23 +292,25 @@ TextEditingController _textFieldController = TextEditingController();
                             context: context);
                             print("login");
                             print(login);
-                            if(login != null)
-                            {
+                            // if(login != null)
+                            // {
 
-                              if(login.displayName==null){
-                                  displayInputDialog(context);
+                            //   if(login.displayName==null){
+                            //       displayInputDialog(context);
 
-                              }else{
+                            //   }else{
+                                
                                  Navigator.push(
                                 context,
                                 MaterialPageRoute(builder: (context) => Home(camera:widget.camera)),
                               );
-                              }
+                            //  }
+                            
                               
                              // // Navigator.of(context).
                             //  // pushReplacement(
                             //  //   MaterialPageRoute(builder: ((context) => const Home())));
-                             }
+                           //  }
                         },
                         
                         elevation: 0.0,

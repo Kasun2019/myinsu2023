@@ -5,10 +5,15 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:insurtechmobapp/CustomMessageDialog%20.dart';
+import 'package:insurtechmobapp/SqlLiteDB.dart';
+import 'package:insurtechmobapp/conectivityInt.dart';
 import 'package:insurtechmobapp/findLocation.dart';
 import 'package:insurtechmobapp/models/customer.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:insurtechmobapp/models/insu.dart';
 import 'package:insurtechmobapp/vehicle.dart';
+import 'package:intl/intl.dart';
+import 'package:sqflite/sqlite_api.dart';
 
 
 class PhotoUpload extends StatefulWidget {
@@ -16,10 +21,12 @@ class PhotoUpload extends StatefulWidget {
     super.key,
     required this.camera,
     required this.customer,
+    required this.insu,
   });
 
   final CameraDescription camera;
   final Customer customer;
+  final Insu insu;
 
   @override
   TakePictureScreenState createState() => TakePictureScreenState();
@@ -104,7 +111,8 @@ class TakePictureScreenState extends State<PhotoUpload> {
                 builder: (context) => DisplayPictureScreen(
                   imagePath: _images,
                   customer: widget.customer,
-                  camera:widget.camera
+                  camera:widget.camera,
+                  insu:widget.insu
                 ),
               ),
             );
@@ -133,15 +141,20 @@ class TakePictureScreenState extends State<PhotoUpload> {
 class DisplayPictureScreen extends StatelessWidget {
   final List<File> imagePath;
   late Customer customer;
+  late Insu insu;
   CameraDescription camera;
 
-  DisplayPictureScreen({super.key, required this.imagePath,required this.customer,required this.camera});
+  DisplayPictureScreen({super.key, required this.imagePath,required this.customer,required this.camera,required this.insu});
 
 
   void saveDataToFirebase(context) async {
     
-    final collectionRef = FirebaseFirestore.instance.collection('insu');
+    
     FindLocation findLocation=FindLocation();
+    
+    DateTime now = DateTime.now();
+    String currentTime = DateFormat('yyyy-MM-dd HH:mm:ss').format(now);
+
     try{
 
       
@@ -150,7 +163,7 @@ class DisplayPictureScreen extends StatelessWidget {
       double cLongitude=0.0;
       if(await findLocation.checkPermission()){
 
-         location =  findLocation.getLocation() as Position;
+         location =  await findLocation.getLocation();
          cLatitude = location.latitude;
          cLongitude = location.longitude;
 
@@ -159,31 +172,95 @@ class DisplayPictureScreen extends StatelessWidget {
          print(cLongitude);
       }
 
-      await collectionRef.add({
-            'policyNumber': customer.code,
-            'cType': customer.cType,
-            'cLatitude': cLatitude,
-            'cLongitude': cLongitude,
-          });
+      bool conStatus = await ConnectivityCheck.instance.status;
+      Database? db =  await SqlLiteDB.instance.db;
+      print("ConnectivityCheck");
+      print(conStatus);
+      if(conStatus){
+      
+        final collectionRef = FirebaseFirestore.instance.collection('insu');
 
-     imagePath.asMap().forEach((index, val) {
-      String nameSet = customer.code+"_$index";
+        await collectionRef.add({
+              'policyNumber': customer.code,
+              'cType': customer.cType,
+              'cLatitude': cLatitude,
+              'cLongitude': cLongitude,
+              'vehicle_no':insu.vehicleNumber,
+              'chassis_number':insu.vehicleChassis,
+              'effective_date':insu.effectiveDate,
+              'submit_date':currentTime,
+              'status': "pending",
+            });
+        imagePath.asMap().forEach((index, val) {
+          String nameSet = customer.code+"_$index";
 
-        selectAndUploadImage(val, nameSet);
-      });
+            selectAndUploadImage(val, nameSet);
+        });
 
-      showCustomMessageDialog(context, "Save", "Save data Success !", () =>
-                                Navigator.push(
+            showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return CustomMessageDialog(
+            title: "Save Completely",
+            message: "Save data Success !",
+            onPositivePressed: (){
+               Navigator.push(
                                 context,
                                 MaterialPageRoute(builder: (context) =>  
                                 Vehicle(camera:camera)),
-                              ),       
+                              );
+                              Navigator.of(context).pop(); 
+            }
+          );
+        },
+      );
+      }else if(db!.isOpen){
+        print("add data to local Db");
+            await db.rawInsert(
+            'INSERT OR IGNORE INTO insu(policyNumber, cType, cLatitude,cLongitude,vehicle_no,chassis_number,'
+            'effective_date,submit_date,status,offline) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [customer.code, customer.cType, cLatitude,cLongitude,insu.vehicleNumber,insu.vehicleChassis,
+            insu.effectiveDate,currentTime,"pending",1]);
+       print("added data.............");
+
+       
+
+       
+      }else{
+
+
+      }
+
+       showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return CustomMessageDialog(
+            title: "Save Local",
+            message: "Save data Success !",
+            onPositivePressed: (){
+              print("ddddddddddd");
+               Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) =>  
+                                Vehicle(camera:camera)),
+                              );
+                              Navigator.of(context).pop(); 
+            }
+          );
+        },
       );
       Navigator.push(
                                 context,
                                 MaterialPageRoute(builder: (context) =>  
                                 Vehicle(camera:camera)),
                               );
+
+     
+      // Navigator.push(
+      //                           context,
+      //                           MaterialPageRoute(builder: (context) =>  
+      //                           Vehicle(camera:camera)),
+      //                         );
     }catch(e){
       print(e);
     }
