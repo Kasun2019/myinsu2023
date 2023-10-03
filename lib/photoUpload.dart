@@ -4,10 +4,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:insurtechmobapp/CustomMessageDialog%20.dart';
-import 'package:insurtechmobapp/SqlLiteDB.dart';
-import 'package:insurtechmobapp/conectivityInt.dart';
-import 'package:insurtechmobapp/findLocation.dart';
+import 'package:insurtechmobapp/component/CustomMessageDialog%20.dart';
+import 'package:insurtechmobapp/controller/SqlLiteDB.dart';
+import 'package:insurtechmobapp/controller/conectivityInt.dart';
+import 'package:insurtechmobapp/controller/findLocation.dart';
 import 'package:insurtechmobapp/models/customer.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:insurtechmobapp/models/insu.dart';
@@ -118,16 +118,6 @@ class TakePictureScreenState extends State<PhotoUpload> {
             );
             }
 
-       
-             
-
-            // await Navigator.of(context).push(
-            //   MaterialPageRoute(
-            //     builder: (context) => DisplayPictureScreen(
-            //       imagePath: image.path,
-            //     ),
-            //   ),
-            // );
           } catch (e) {
             print(e);
           }
@@ -149,33 +139,22 @@ class DisplayPictureScreen extends StatelessWidget {
 
   void saveDataToFirebase(context) async {
     
-    
     FindLocation findLocation=FindLocation();
-    
     DateTime now = DateTime.now();
     String currentTime = DateFormat('yyyy-MM-dd HH:mm:ss').format(now);
-
     try{
-
-      
       Position location;
       double cLatitude=0.0;
       double cLongitude=0.0;
       if(await findLocation.checkPermission()){
-
          location =  await findLocation.getLocation();
          cLatitude = location.latitude;
          cLongitude = location.longitude;
-
-         print("location ................");
-         print(cLatitude);
-         print(cLongitude);
       }
 
       bool conStatus = await ConnectivityCheck.instance.status;
       Database? db =  await SqlLiteDB.instance.db;
-      print("ConnectivityCheck");
-      print(conStatus);
+  
       if(conStatus){
       
         final collectionRef = FirebaseFirestore.instance.collection('insu');
@@ -190,6 +169,7 @@ class DisplayPictureScreen extends StatelessWidget {
               'effective_date':insu.effectiveDate,
               'submit_date':currentTime,
               'status': "pending",
+              'dType': 0,
             });
         imagePath.asMap().forEach((index, val) {
           String nameSet = customer.code+"_$index";
@@ -215,22 +195,14 @@ class DisplayPictureScreen extends StatelessWidget {
         },
       );
       }else if(db!.isOpen){
-        print("add data to local Db");
             await db.rawInsert(
             'INSERT OR IGNORE INTO insu(policyNumber, cType, cLatitude,cLongitude,vehicle_no,chassis_number,'
             'effective_date,submit_date,status,offline) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
             [customer.code, customer.cType, cLatitude,cLongitude,insu.vehicleNumber,insu.vehicleChassis,
             insu.effectiveDate,currentTime,"pending",1]);
-       print("added data.............");
-
-       
-
-       
       }else{
 
-
       }
-
        showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -238,7 +210,6 @@ class DisplayPictureScreen extends StatelessWidget {
             title: "Save Local",
             message: "Save data Success !",
             onPositivePressed: (){
-              print("ddddddddddd");
                Navigator.push(
                                 context,
                                 MaterialPageRoute(builder: (context) =>  
@@ -254,19 +225,9 @@ class DisplayPictureScreen extends StatelessWidget {
                                 MaterialPageRoute(builder: (context) =>  
                                 Vehicle(camera:camera)),
                               );
-
-     
-      // Navigator.push(
-      //                           context,
-      //                           MaterialPageRoute(builder: (context) =>  
-      //                           Vehicle(camera:camera)),
-      //                         );
     }catch(e){
       print(e);
     }
-    
-    
-    
   }
 
   Future<void> selectAndUploadImage(imgPath, imgName) async {

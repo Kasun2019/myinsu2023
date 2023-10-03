@@ -2,11 +2,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity/connectivity.dart';
 import 'package:flutter/material.dart';
-import 'package:insurtechmobapp/SqlLiteDB.dart';
-import 'package:insurtechmobapp/conectivityInt.dart';
+import 'package:insurtechmobapp/controller/SqlLiteDB.dart';
+import 'package:insurtechmobapp/controller/conectivityInt.dart';
 import 'package:intl/intl.dart';
 import 'package:sqflite/sqlite_api.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 class Mycart extends StatefulWidget {
   const Mycart({super.key});
@@ -17,15 +18,36 @@ class Mycart extends StatefulWidget {
 
 class _MycartState extends State<Mycart> {
 
-late Connectivity _connectivity;
-late Stream<ConnectivityResult> _connectivityStream;
-
+FirebaseFirestore collectionRef = FirebaseFirestore.instance;
+late int notificationCount=0;
 @override
   void initState() {
-    // TODO: implement initState
+   
     super.initState();
       updateWhenOnline();
+   
+   collectionRef.settings = const Settings(
+    persistenceEnabled: true,
+    cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
+  );
+    checkOfflineCount();
   }
+
+  
+void checkOfflineCount() async{
+
+  Database? db =  await SqlLiteDB.instance.db;
+  List<Map<String, dynamic>> localData =  await db!.rawQuery('select * from insu where offline=1');
+ setState(() {
+   notificationCount = localData.length;
+  print("notificationCount");
+  print(notificationCount);
+ });
+  
+    
+
+
+}
   
 
 void updateWhenOnline() async{
@@ -47,7 +69,10 @@ void updateWhenOnline() async{
       String currentTime = DateFormat('yyyy-MM-dd HH:mm:ss').format(now);  
         final collectionRef = FirebaseFirestore.instance.collection('insu');
 
+        
+
           if(localData.isNotEmpty){
+            
             for(final mp in localData ){
             await collectionRef.add({
                           'policyNumber': mp['policyNumber'],
@@ -59,6 +84,7 @@ void updateWhenOnline() async{
                           'effective_date':mp['effective_date'],
                           'submit_date':currentTime,
                           'status': "pending",
+                          'dType': 0,
                         });
             }
             await db.delete('insu',
@@ -74,7 +100,7 @@ void updateWhenOnline() async{
                 textColor: Colors.white,
                 fontSize: 16.0,
               );
-             
+             checkOfflineCount();
           }
     }               
  
@@ -85,13 +111,15 @@ void updateWhenOnline() async{
     await Future.delayed(Duration(seconds: 2));
 
     setState(() {
-      fetchData();
+      //fetchData();
     });
   }
 
   void deleteInsu(String docId) async {
-  final collectionRef = FirebaseFirestore.instance.collection('insu');
+  
+  final deleteData = collectionRef.collection('insu');
   Database? db =  await SqlLiteDB.instance.db;
+  List<String> dataList = [];
   try {
 
     await db!.delete(
@@ -99,7 +127,7 @@ void updateWhenOnline() async{
       where: 'id = ?',
       whereArgs: [docId],
     );
-    await collectionRef.doc(docId).delete();
+    await deleteData.doc(docId).delete();
 
       Fluttertoast.showToast(
                 msg: "Record deleted successfully",
@@ -112,6 +140,7 @@ void updateWhenOnline() async{
               );
     setState(() {
       _handleRefresh();
+      checkOfflineCount();
     });
 
     print('Record deleted successfully.');
@@ -120,93 +149,141 @@ void updateWhenOnline() async{
   }
 }
 
+  // Stream<Object?>? fetchData() {
+  //     final collectionRefs = collectionRef.collection('insu');
+          
+  //     final querySnapshot =  collectionRefs.snapshots();
+    
+
+  //   return querySnapshot; 
+  // }
 
 
   @override
   Widget build(BuildContext context) {
+    print("notificationCount2222222");
+  print(notificationCount);
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Cart'),
         actions: [
             // Add your sync button here
-            IconButton(
-              icon: const Icon(Icons.sync),
-              onPressed: () {
-                updateWhenOnline();
-              },
-            ),
-          ],
-      ),
-      body: RefreshIndicator(
-          onRefresh: _handleRefresh,
-        child: FutureBuilder<List<Map<String, dynamic>>>(
-          
-          future: fetchData(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (snapshot.hasError) {
-              return Center(child: Text('OOPS ! : ${snapshot.error}'));
-            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-              return const Center(child: Text('No data available.'));
-            } else {
-              return ListView.builder(
-                itemCount: snapshot.data!.length,
-                itemBuilder: (context, index) {
-                  final item = snapshot.data![index];
-                  return Card(
-                    elevation : 5,
-                    child: ListTile(
-                      leading: item['offline'] == 1 ? Icon(Icons.car_repair,color: Colors.red,):Icon(Icons.car_repair,color: Colors.green,),
-                      title: Text(item['policyNumber']), 
-                      subtitle: Text("Policy No: "+item['vehicle_no']+" ,\nChassis No: "+item['chassis_number']+",\nDate Submit: "+item['effective_date']), 
-                      trailing: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children:[ Text(item['status'],style:TextStyle(
-                          color:item['status']=="pending"?Colors.amber:Colors.green
-                          )
-                        ),
-                        Expanded(
-                          child: IconButton(
-                            onPressed: () {
-                             deleteInsu(item['id']);
-                            },
-                            icon: const Icon(Icons.delete,color: Color.fromARGB(255, 177, 124, 120),),
-                          ),
-                        ),
-                        ]
-                      ),
-                      onTap: () {
-
-                      },
+             Column(
+              children: [
+               Stack(
+                 children: [
+                   IconButton(
+                    icon: const Icon(Icons.sync),
+                    onPressed: () {
+                      updateWhenOnline();
+                    },
                     ),
-                  );
-                },
-              );
-            }
-          },
-        ),
+                 
+                    if (notificationCount > 0)
+                        Positioned(
+                          right: 0,
+                          top: 0,
+                          child: Container(
+                            padding: const EdgeInsets.all(5),
+                            decoration: const BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Text(
+                              notificationCount.toString(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          
+                        ),
+                  ]
+               ),
+              ]
+             ),
+          ],
+          
       ),
+      body: StreamBuilder(
+        stream: collectionRef.collection('insu').snapshots(),
+        builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const CircularProgressIndicator();
+        }
+        if (snapshot.hasError) {
+          return Text('OOPS! : ${snapshot.error}');
+        }
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return Text('No data available');
+        }
+       
+        final documents = snapshot.data!.docs; 
+        
+        return ListView.builder(
+                  itemCount: documents.length,
+                  itemBuilder: (context, index) {
+                    final item = documents[index].data();
+                    print(item);
+                    return Card(
+                      elevation : 5,
+                      child: ListTile(
+                        leading: checkDamageType(item['dType']),
+                        title: Text(item['policyNumber']), 
+                        subtitle: Text("Policy No: "+item['vehicle_no']+" ,\nChassis No: "+item['chassis_number']+",\nDate Submit: "+item['effective_date']), 
+                        trailing: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children:[ Text(item['status'],style:TextStyle(
+                            color:item['status']=="pending"?Colors.amber:Colors.green
+                            )
+                          ),
+                          Expanded(
+                            child: IconButton(
+                              onPressed: () {
+                               deleteInsu(documents[index].id);
+                              },
+                              icon: const Icon(Icons.delete,color: Color.fromARGB(255, 177, 124, 120),),
+                            ),
+                          ),
+                          ]
+                        ),
+                        onTap: () {
+      
+                        },
+                      ),
+                    );
+                  },
+        
+                );
+        }
+      )
+            
     );
   }
-}
+  Icon checkDamageType(int dType){
 
-Future<List<Map<String, dynamic>>> fetchData() async {
+   
+     
+   
 
-  try {
-    //bool conStatus = await ConnectivityCheck.instance.status;
-   /// List<Map<String, dynamic>> dummy;
-   /// 
-    Database? db =  await SqlLiteDB.instance.db;
-    
+    switch (dType) {
 
-    return await db!.rawQuery('select i.* from insu i'); 
+      case 1 :
+        return Icon(Icons.car_repair,color: Colors.red,);
+      case 2 :
+        return Icon(Icons.car_repair,color: Colors.amber,);
+      case 3 :
+        return Icon(Icons.car_repair,color: Colors.green,);
 
-  } catch (e) {
-    print('Error fetching data: $e');
-    return [];
+      default:
+        return Icon(Icons.car_repair,color: Color.fromARGB(255, 170, 171, 172),);
+
+    }
   }
 }
+
+ 
 
 
 

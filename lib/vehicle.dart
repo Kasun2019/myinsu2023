@@ -2,9 +2,9 @@
 import 'package:camera/camera.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:insurtechmobapp/CustomMessageDialog%20.dart';
-import 'package:insurtechmobapp/SqlLiteDB.dart';
-import 'package:insurtechmobapp/conectivityInt.dart';
+import 'package:insurtechmobapp/component/CustomMessageDialog%20.dart';
+import 'package:insurtechmobapp/controller/SqlLiteDB.dart';
+import 'package:insurtechmobapp/controller/conectivityInt.dart';
 import 'package:insurtechmobapp/home.dart';
 import 'package:insurtechmobapp/imageGallery.dart';
 import 'package:insurtechmobapp/models/customer.dart';
@@ -39,12 +39,9 @@ class _VehicleState extends State<Vehicle> {
   void findCustomer(String userInput) async{
 
     bool conStatus = await ConnectivityCheck.instance.status;
-    print("check internet conectivity");
-    print(await ConnectivityCheck.instance.status);
     Database? db =  await SqlLiteDB.instance.db;
-    print(conStatus);
+
     if(conStatus){
-          print("work with internet");
           final collectionRef = FirebaseFirestore.instance.collection(collectionName);
           
                 final querySnapshot = await collectionRef
@@ -56,7 +53,6 @@ class _VehicleState extends State<Vehicle> {
                 final customerNameData = data['name'];
                 final customerAddressData = data['address'];
               
-                // Update the output TextField with the fetched data.
                 setState(() {
                   customerName.text = customerNameData;
                   customerAddress.text = customerAddressData;
@@ -64,7 +60,6 @@ class _VehicleState extends State<Vehicle> {
                 });
               }
     }else if(db!.isOpen){
-          print("work with local");
               String query = 'SELECT * FROM customers WHERE code = ? LIMIT 1';
 
              

@@ -1,9 +1,12 @@
+import 'dart:collection';
+
 import 'package:camera/camera.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:insurtechmobapp/mapViewList.dart';
 import 'package:insurtechmobapp/myCart.dart';
 import 'package:insurtechmobapp/vehicle.dart';
-import 'CButtonComponent.dart';
+import 'component/CButtonComponent.dart';
 
 class Home extends StatelessWidget {
   const Home({super.key,required this.camera});
@@ -105,6 +108,26 @@ class Home extends StatelessWidget {
                       },
                     ),
                     ), 
+              Container(
+                  color: const Color.fromARGB(255, 255, 255, 255),
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(2),
+                      child: CButtonComponent(
+                      text: 'View in Map',
+                      paramTextStyle:const TextStyle(
+                                    fontSize: 24, 
+                                    fontWeight: FontWeight.bold, 
+                                    color: Color.fromARGB(255, 87, 23, 81), 
+                      ),
+                      paramIcon: const Icon(Icons.location_pin,size: 50,color: Color.fromARGB(255, 87, 23, 81),),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const MapViewList(),
+                        ));
+                      },
+                    ),
+                ),
                
             ],
           )

@@ -2,19 +2,21 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:insurtechmobapp/SqlLiteDB.dart';
-import 'package:insurtechmobapp/findLocation.dart';
+import 'package:insurtechmobapp/controller/SqlLiteDB.dart';
+import 'package:insurtechmobapp/controller/findLocation.dart';
 import 'package:insurtechmobapp/home.dart';
 import 'package:camera/camera.dart';
+import 'package:insurtechmobapp/userRegistration.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 
-import 'CustomMessageDialog .dart';
+import 'component/CustomMessageDialog .dart';
 
 void main() async {
 
     WidgetsFlutterBinding.ensureInitialized();
-
+    
   // Obtain a list of the available cameras on the device.
   final cameras = await availableCameras();
 
@@ -121,12 +123,6 @@ TextEditingController _textFieldController = TextEditingController();
 
        Database? db =  await SqlLiteDB.instance.db;
 
-      print("db?.isOpen");
-      print(db?.isOpen);
-
-      
-
-
         if(await findLocation.checkPermission()){
 
          Position location =  await findLocation.getLocation();
@@ -143,7 +139,7 @@ TextEditingController _textFieldController = TextEditingController();
       UserCredential credential = await auth.signInWithEmailAndPassword(
         email: email, password: password);
       user = credential.user;
-       print(credential.user);
+     
     } on FirebaseAuthException catch(e)
     {
       print(e.code);
@@ -161,12 +157,8 @@ TextEditingController _textFieldController = TextEditingController();
           context,
           "Network Error!",
           "You are running on offline mode!",
-          ()=>{
-            
-            
-          }
+          ()=>{}
           );
-          
       }else{
          print("No User Found!");
         showCustomMessageDialog(
@@ -284,35 +276,23 @@ TextEditingController _textFieldController = TextEditingController();
                     const SizedBox(height: 32,),
                     Container(
                       child: RawMaterialButton(
-                        
                         onPressed:() async{
                           User? login = await loginWithCredential(
                             email: emailContoller.text, 
                             password: passwordContoller.text, 
                             context: context);
-                            print("login");
-                            print(login);
-                            // if(login != null)
-                            // {
-
-                            //   if(login.displayName==null){
-                            //       displayInputDialog(context);
-
-                            //   }else{
-                                
+                            if(login != null)
+                            {
+                              if(login.displayName==null){
+                                  displayInputDialog(context);
+                              }else{
                                  Navigator.push(
                                 context,
                                 MaterialPageRoute(builder: (context) => Home(camera:widget.camera)),
                               );
-                            //  }
-                            
-                              
-                             // // Navigator.of(context).
-                            //  // pushReplacement(
-                            //  //   MaterialPageRoute(builder: ((context) => const Home())));
-                           //  }
+                              }
+                             }
                         },
-                        
                         elevation: 0.0,
                         child: Container(
                           margin: const EdgeInsets.only(left: 47,right: 47),
@@ -344,6 +324,20 @@ TextEditingController _textFieldController = TextEditingController();
                     const Text("forgot password",
                     style: TextStyle(color: Color.fromARGB(255, 54, 51, 218)),
                     ),
+                    const SizedBox(height: 10,), 
+                    GestureDetector(
+                      onTap:(){
+                        Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => UserRegistor(camera:widget.camera)),
+                        );
+                      },
+                      child: const Text("sign up",
+                      style: TextStyle(color: Color.fromARGB(255, 162, 27, 167)),
+                      ),
+                    ),
+                    
+                    
                     const SizedBox(height: 10,),
                     const Icon(
                       Icons.fingerprint,
