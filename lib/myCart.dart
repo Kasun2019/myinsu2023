@@ -4,6 +4,7 @@ import 'package:connectivity/connectivity.dart';
 import 'package:flutter/material.dart';
 import 'package:insurtechmobapp/controller/SqlLiteDB.dart';
 import 'package:insurtechmobapp/controller/conectivityInt.dart';
+import 'package:insurtechmobapp/viewEvent.dart';
 import 'package:intl/intl.dart';
 import 'package:sqflite/sqlite_api.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -44,9 +45,6 @@ void checkOfflineCount() async{
   print(notificationCount);
  });
   
-    
-
-
 }
   
 
@@ -249,7 +247,10 @@ void updateWhenOnline() async{
                           ]
                         ),
                         onTap: () {
-      
+                          Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) =>  ViewEvent(item:item),
+                        ));
                         },
                       ),
                     );

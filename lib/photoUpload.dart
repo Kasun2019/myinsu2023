@@ -251,7 +251,7 @@ class DisplayPictureScreen extends StatelessWidget {
           children:[ Expanded(      
                        child: GridView.builder(
                           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2, //         Number of columns
+                            crossAxisCount: 2,
                           ),
                           itemCount: imagePath.length,
                           itemBuilder: (BuildContext context, int index) {
@@ -276,9 +276,9 @@ class DisplayPictureScreen extends StatelessWidget {
                                       child: Text(
                                         '${index+1}',
                                         style: const TextStyle(
-                                          color: Colors.white, // Text color
+                                          color: Colors.white, 
                                           fontSize: 17,
-                                          fontWeight: FontWeight.bold // Adjust the font size as needed
+                                          fontWeight: FontWeight.bold
                                         ),
                                       ), 
                                     ),
